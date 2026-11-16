@@ -1,6 +1,7 @@
 ### GEO (Generative Engine Optimization) 진단 및 교정 솔루션 파이프라인
 
 > 생성형 AI 검색 환경에서 이커머스 콘텐츠의 인용 가능성을 정량 평가하고 최적화하는 데이터 파이프라인 및 진단 모델 구축 프로젝트입니다.
+
 > multi-team1-project repository copy
 
 #### 🛠 Tech Stack
