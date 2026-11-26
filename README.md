@@ -16,5 +16,5 @@
 - **솔루션 대시보드 FE 구축·BE 로직 설계 (`dashboard`, `dashboard_image`)**
 
 #### 📂 담당 영역 구분
-- **직접 담당 및 구현/고도화 영역:** `DB적재`, `진단 모델2` (`ver1`~`ver4`, `평가`), `소비자_질문`, `dashboard`, `dashboard_image`
+- **직접 담당 및 구현/고도화 영역:** `DB적재`, `진단 모델2`, `소비자_질문`, `dashboard/FE`, `dashboard/app.py` (일부), `dashboard_image`
 - **팀원 수행 영역(참고용):** `진단 모델`, `교정코드`, `ocr`, `JSON-LD_분석`, `코랩`, `평가 코드`
