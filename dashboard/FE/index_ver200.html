@@ -1,0 +1,450 @@
+<!-- 인트로, 로딩화면 추가한 버전 -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEO Solution Service - Team. 골목지옥</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body { font-family: 'Pretendard', sans-serif; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    /* 화면 전환 애니메이션 */
+    .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
+    .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen relative overflow-x-hidden">
+
+  <!-- ========================================== -->
+  <!-- 1. INTRO SCREEN (구상안 첫번째 페이지 반영) -->
+  <!-- ========================================== -->
+  <div id="intro-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+    <div class="max-w-xl w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl text-center space-y-6 relative">
+      <!-- 동그라미 아이콘 장식 -->
+      <div class="absolute top-4 right-4 w-6 h-6 rounded-full border-2 border-sky-400 opacity-60"></div>
+      
+      <div class="space-y-2">
+        <h1 class="text-3xl font-extrabold text-slate-100 tracking-tight">Welcome to</h1>
+        <h2 class="text-2xl font-bold text-sky-400">GEO Solution Service</h2>
+        <p class="text-xs text-slate-400 border-t border-slate-800 pt-2 w-max mx-auto">
+          Team. <strong class="text-slate-200">골목지옥</strong>
+        </p>
+      </div>
+
+      <!-- URL 입력 폼 -->
+      <form onsubmit="startAnalysis(event)" class="space-y-4 pt-4">
+        <div class="relative">
+          <input type="text" id="product-url" required placeholder="enter your product page URL" 
+                 class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-sky-500 transition pr-12">
+          <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-sky-500 hover:bg-sky-400 text-slate-950 w-8 h-8 rounded-lg flex items-center justify-center transition">
+            <i class="fa-solid fa-arrow-return-enter text-sm"></i>
+          </button>
+        </div>
+      </form>
+
+      <!-- 요정 소속 안내 -->
+      <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 px-2">
+        <div class="flex items-center gap-1 font-semibold text-slate-300">
+          <i class="fa-solid fa-circle-info text-sky-400"></i> Team Info
+        </div>
+        <div class="flex gap-2">
+          <span class="text-blue-400">💧 물</span>
+          <span class="text-amber-400">⚡ 전기</span>
+          <span class="text-red-400">🔥 불</span>
+          <span class="text-emerald-400">🌱 풀</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. LOADING SCREEN (구상안 두번째 페이지 반영) -->
+  <!-- ========================================== -->
+  <div id="loading-screen" class="fixed inset-0 z-40 bg-slate-950 flex flex-col items-center justify-center p-4 hidden">
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl space-y-6 relative">
+      
+      <!-- 오른쪽 상단 Tip 말풍선 -->
+      <div class="absolute -top-12 right-0 bg-sky-950 border border-sky-500/30 text-sky-300 text-xs px-3 py-2 rounded-xl shadow-lg flex items-center gap-2 max-w-[220px]">
+        <i class="fa-regular fa-lightbulb text-amber-400 animate-pulse"></i>
+        <span id="tip-text" class="truncate">Tip! GEO 점수가 높을수록 AI 검색 노출확률 증가</span>
+      </div>
+
+      <!-- Loading 타이틀 및 모션 -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center justify-center gap-3">
+          <div class="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xl font-bold tracking-wider text-slate-200">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Progress bar & 수치(n%) -->
+      <div class="space-y-2">
+        <div class="w-full bg-slate-950 rounded-full h-4 overflow-hidden border border-slate-800 p-0.5">
+          <div id="progress-bar" class="bg-gradient-to-r from-sky-500 to-emerald-400 h-full rounded-full transition-all duration-300 w-0"></div>
+        </div>
+        <div class="text-right text-xs font-bold text-sky-400">
+          <span id="progress-percent">0</span>%
+        </div>
+      </div>
+
+      <!-- 진행사항 (Log) & 마스코트 요정 매칭 -->
+      <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
+        <div class="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+          <span>Log Process</span>
+          <i class="fa-solid fa-bars-staggered"></i>
+        </div>
+        <div id="log-text" class="text-sm font-semibold text-slate-200 flex items-center gap-2 h-6">
+          <span id="fairy-icon">💧</span>
+          <span id="step-description" class="animate-pulse">페이지 정보수집 중...</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. MAIN DASHBOARD (기존 UI 화면) -->
+  <!-- ========================================== -->
+  <div id="main-dashboard" class="hidden">
+    <!-- GNB Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-6 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="bg-sky-500/10 border border-sky-500/30 text-sky-400 p-2 rounded-lg font-bold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-microchip"></i> GEO Solution
+        </div>
+        <span class="text-xs text-slate-400 border-l border-slate-700 pl-3">Team. <strong class="text-slate-200">골목지옥</strong></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-medium">
+          🟢 PRO 플랜 활성화
+        </span>
+        <button onclick="openModal()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition text-slate-300">
+          <i class="fa-solid fa-crown text-amber-400 mr-1"></i> BM / 요금제 보기
+        </button>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+
+      <!-- 4대 마스코트 요정 카드 -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-blue-500/30 p-4 rounded-xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl font-bold">💧</div>
+          <div>
+            <div class="text-xs text-blue-400 font-bold">물 요정</div>
+            <div class="text-sm font-semibold">데이터 수집중</div>
+            <div class="text-[11px] text-slate-400">페이지 구조 파싱</div>
+          </div>
+        </div>
+        <div class="bg-slate-900 border border-amber-500/30 p-4 rounded-xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-bold">⚡</div>
+          <div>
+            <div class="text-xs text-amber-400 font-bold">전기 요정</div>
+            <div class="text-sm font-semibold">GEO 점수 진단</div>
+            <div class="text-[11px] text-slate-400">사전 AI 모델 적용</div>
+          </div>
+        </div>
+        <div class="bg-slate-900 border border-red-500/30 p-4 rounded-xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xl font-bold">🔥</div>
+          <div>
+            <div class="text-xs text-red-400 font-bold">불 요정</div>
+            <div class="text-sm font-semibold">위험요소 감지</div>
+            <div class="text-[11px] text-slate-400">통이미지 92% 경고</div>
+          </div>
+        </div>
+        <div class="bg-slate-900 border border-emerald-500/30 p-4 rounded-xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl font-bold">🌱</div>
+          <div>
+            <div class="text-xs text-emerald-400 font-bold">풀 요정</div>
+            <div class="text-sm font-semibold">최적화 완료</div>
+            <div class="text-[11px] text-slate-400">아코디언 HTML 생성</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 대시보드 탭 네비게이션 -->
+      <div class="border-b border-slate-800 flex gap-2">
+        <button onclick="switchTab('tab1')" id="btn-tab1" class="tab-btn px-4 py-2.5 font-medium text-sm border-b-2 border-sky-400 text-sky-400 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie"></i> Tab 1. 결과 요약
+        </button>
+        <button onclick="switchTab('tab2')" id="btn-tab2" class="tab-btn px-4 py-2.5 font-medium text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-stethoscope"></i> Tab 2. 세부 진단
+        </button>
+        <button onclick="switchTab('tab3')" id="btn-tab3" class="tab-btn px-4 py-2.5 font-medium text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-code"></i> Tab 3. 최적화 산출물 <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded">복붙</span>
+        </button>
+        <button onclick="switchTab('tab4')" id="btn-tab4" class="tab-btn px-4 py-2.5 font-medium text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-book"></i> Tab 4. 사용 가이드 & 이론
+        </button>
+      </div>
+
+      <!-- TAB 1: 결과 요약 -->
+      <section id="tab1" class="tab-content active space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-center justify-around">
+            <div class="text-center">
+              <span class="text-xs text-slate-400 block mb-1">교정 전 점수</span>
+              <span class="text-4xl font-extrabold text-red-400">32점</span>
+            </div>
+            <i class="fa-solid fa-arrow-right text-slate-600 text-xl"></i>
+            <div class="text-center">
+              <span class="text-xs text-emerald-400 block mb-1">교정 후 예상 점수</span>
+              <span class="text-5xl font-extrabold text-emerald-400">94점</span>
+            </div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center">
+            <h4 class="text-sm font-semibold text-slate-300 mb-2">교정 후 AI 인용률 예상 상승추이</h4>
+            <div class="h-16 bg-slate-950 rounded-lg border border-slate-800 flex items-center px-4 justify-between">
+              <span class="text-xs text-slate-400">인용 확률</span>
+              <span class="text-lg font-bold text-sky-400">+185% 상승 🚀</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: 세부 진단 -->
+      <section id="tab2" class="tab-content space-y-4">
+        <div class="bg-slate-900 border border-red-500/30 p-5 rounded-xl">
+          <h3 class="text-red-400 font-bold text-sm mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i> 상품페이지 약점 진단 (불 요정 감지)
+          </h3>
+          <ul class="space-y-2 text-xs text-slate-300">
+            <li class="bg-slate-950 p-2.5 rounded border border-slate-800">1. 상품명 키워드 스터핑 (스팸 분류 위험 높음)</li>
+            <li class="bg-slate-950 p-2.5 rounded border border-slate-800">2. 이미지 Alt 속성 부재 (AI 크롤러 파싱 불가)</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- TAB 3: 최적화 산출물 -->
+      <section id="tab3" class="tab-content space-y-6">
+        <div class="bg-emerald-950/20 border border-emerald-500/30 p-4 rounded-xl flex items-center gap-3">
+          <span class="text-2xl">🌱</span>
+          <div class="text-xs">
+            <strong class="text-emerald-400 block font-bold text-sm">풀 요정의 산출물이 준비되었습니다!</strong>
+            아래 코드를 복사하여 쇼핑몰 에디터(스마트스토어/카페24 등)의 HTML 편집 모드에 붙여넣으세요.
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- 1. 본문 텍스트 -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative">
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-bold text-sm text-sky-400">1. 본문 텍스트 (아코디언 HTML)</h4>
+              <button onclick="copyCode('code-accordion')" class="bg-sky-500 hover:bg-sky-600 text-xs text-slate-950 font-bold px-3 py-1.5 rounded-lg transition">
+                <i class="fa-regular fa-copy mr-1"></i> 코드 복사
+              </button>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">소비자 눈에는 깔끔한 버튼으로 보이고, AI 크롤러는 내부 텍스트를 수집합니다.</p>
+            <pre id="code-accordion" class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-sky-300 font-mono overflow-x-auto max-h-48">&lt;details style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 8px;"&gt;
+  &lt;summary style="font-weight: bold; cursor: pointer;"&gt;
+    🔍 AI 인용용 제품 세부 스펙 및 Q&amp;A 보기 (클릭)
+  &lt;/summary&gt;
+  &lt;div style="margin-top: 12px; font-size: 14px; line-height: 1.6;"&gt;
+    &lt;p&gt;&lt;strong&gt;[제품 상세 스펙]&lt;/strong&gt;&lt;/p&gt;
+    &lt;p&gt;소재: 100% 오가닉 코튼 | 치수: 가로 50cm x 세로 70cm&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/details&gt;</pre>
+          </div>
+
+          <!-- 2. JSON-LD -->
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative">
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-bold text-sm text-sky-400">2. Schema.org (JSON-LD)</h4>
+              <button onclick="copyCode('code-json')" class="bg-sky-500 hover:bg-sky-600 text-xs text-slate-950 font-bold px-3 py-1.5 rounded-lg transition">
+                <i class="fa-regular fa-copy mr-1"></i> 코드 복사
+              </button>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">쇼핑몰 &lt;head&gt; 또는 HTML 상단에 삽입하는 구조화 데이터입니다.</p>
+            <pre id="code-json" class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-amber-300 font-mono overflow-x-auto max-h-48">&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "GEO 최적화 오가닉 상품",
+  "description": "AI 검색엔진 맞춤형 상세 정보"
+}
+&lt;/script&gt;</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: 사용 가이드 -->
+      <section id="tab4" class="tab-content space-y-4">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
+          <h3 class="font-bold text-base text-slate-200">쇼핑몰 플랫폼별 코드 복붙 가이드</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <strong class="text-sky-400 block mb-2 font-bold text-sm">네이버 스마트스토어</strong>
+              <p class="text-slate-400">스마트에디터 ONE 접속 ➔ 우측 하단 [HTML Mode] 클릭 ➔ 복사한 아코디언 코드 붙여넣기 ➔ 저장</p>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <strong class="text-sky-400 block mb-2 font-bold text-sm">카페24 (Cafe24)</strong>
+              <p class="text-slate-400">상품 관리 ➔ 상품 등록/수정 ➔ 상세설명 에디터상단 [HTML] 버튼 클릭 ➔ 코드 삽입</p>
+            </div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <strong class="text-sky-400 block mb-2 font-bold text-sm">아임웹 (Imweb)</strong>
+              <p class="text-slate-400">상세페이지 내 [코드 위젯] 추가 ➔ 복사한 HTML/JSON-LD 코드 붙여넣기 ➔ 게시하기</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 모달 팝업 -->
+  <div id="bm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-2xl w-full space-y-6">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-slate-100"><i class="fa-solid fa-crown text-amber-400 mr-2"></i> GEO Solution 비즈니스 요금제</h3>
+        <button onclick="closeModal()" class="text-slate-500 hover:text-slate-300 text-lg">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center space-y-2">
+          <span class="text-xs text-slate-400 font-bold">Free</span>
+          <div class="text-2xl font-extrabold text-slate-200">₩0</div>
+          <p class="text-[11px] text-slate-500">교정 전 점수 맛보기<br>월 3회 진단</p>
+        </div>
+        <div class="bg-slate-950 p-4 rounded-xl border border-sky-500 text-center space-y-2 relative">
+          <span class="bg-sky-500 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded-full absolute -top-2.5 left-1/2 -translate-x-1/2">추천</span>
+          <span class="text-xs text-sky-400 font-bold">Starter</span>
+          <div class="text-2xl font-extrabold text-sky-400">₩19,000<span class="text-xs font-normal text-slate-500">/월</span></div>
+          <p class="text-[11px] text-slate-400">약점 진단 리포트<br>산출물 복사 (월 30회)</p>
+        </div>
+        <div class="bg-slate-950 p-4 rounded-xl border border-amber-500/50 text-center space-y-2">
+          <span class="text-xs text-amber-400 font-bold">Pro / Agency</span>
+          <div class="text-2xl font-extrabold text-amber-400">₩49,000<span class="text-xs font-normal text-slate-500">/월</span></div>
+          <p class="text-[11px] text-slate-400">무제한 산출물 복사<br>PDF 리포트 추출 권한</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 스크립트 로직 -->
+  <script>
+    // 기획안 기반 8단계 Log 및 요정 매칭 데이터
+    const loadingSteps = [
+      { percent: 12, fairy: "💧", text: "페이지 정보 수집 중..." },
+      { percent: 25, fairy: "⚡", text: "페이지 이미지 분석 중..." },
+      { percent: 38, fairy: "⚡", text: "GEO 항목 점수화 (사전 모델)..." },
+      { percent: 50, fairy: "🔥", text: "비교군과의 대조 (교정전과 대기업평가)..." },
+      { percent: 65, fairy: "🌱", text: "웹페이지 교정 중..." },
+      { percent: 78, fairy: "🔥", text: "비교군과의 대조 (교정후와 대기업평가)..." },
+      { percent: 88, fairy: "⚡", text: "자체 피드백 검증 중..." },
+      { percent: 95, fairy: "💧", text: "결과 정리 중..." },
+      { percent: 100, fairy: "🌱", text: "리포트 페이지 생성 중..." }
+    ];
+
+    // Tip 말풍선 로테이션 문구
+    const tips = [
+      "Tip! 마스코트 요정들이 골목 상권의 생태계 복원을 돕습니다.",
+      "Tip! 이미지 alt 속성 작성만으로도 AI 검색 파싱 확률이 극대화됩니다.",
+      "Tip! 아코디언 HTML 태그는 고객 시선을 해치지 않으면서 AI 텍스트를 제공합니다.",
+      "Tip! 대기업 대비 약점을 파악하여 최적의 교정 솔루션을 적용합니다."
+    ];
+
+    let currentTipIndex = 0;
+
+    // 분석 시작 (인트로 ➔ 로딩)
+    function startAnalysis(e) {
+      e.preventDefault();
+      const urlInput = document.getElementById('product-url').value;
+      if (!urlInput) return;
+
+      const introScreen = document.getElementById('intro-screen');
+      const loadingScreen = document.getElementById('loading-screen');
+
+      introScreen.classList.add('fade-out');
+
+      setTimeout(() => {
+        introScreen.style.display = 'none';
+        loadingScreen.classList.remove('hidden');
+        runLoadingSequence();
+      }, 500);
+    }
+
+    // 로딩 시퀀스 진행
+    function runLoadingSequence() {
+      let step = 0;
+      const progressBar = document.getElementById('progress-bar');
+      const progressPercent = document.getElementById('progress-percent');
+      const fairyIcon = document.getElementById('fairy-icon');
+      const stepDescription = document.getElementById('step-description');
+      const tipText = document.getElementById('tip-text');
+
+      // Tip 말풍선 2.5초마다 교체
+      const tipInterval = setInterval(() => {
+        currentTipIndex = (currentTipIndex + 1) % tips.length;
+        tipText.innerText = tips[currentTipIndex];
+      }, 2500);
+
+      // Log 진행 타이머
+      const interval = setInterval(() => {
+        if (step < loadingSteps.length) {
+          const currentData = loadingSteps[step];
+          progressBar.style.width = `${currentData.percent}%`;
+          progressPercent.innerText = currentData.percent;
+          fairyIcon.innerText = currentData.fairy;
+          stepDescription.innerText = currentData.text;
+          step++;
+        } else {
+          clearInterval(interval);
+          clearInterval(tipInterval);
+
+          // 로딩 완료 후 메인 대시보드로 이동
+          setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const mainDashboard = document.getElementById('main-dashboard');
+
+            loadingScreen.classList.add('fade-out');
+            setTimeout(() => {
+              loadingScreen.style.display = 'none';
+              mainDashboard.classList.remove('hidden');
+              mainDashboard.classList.add('fade-in');
+            }, 500);
+          }, 600);
+        }
+      }, 800); // 단계별 간격 시간
+    }
+
+    // 탭 전환 함수
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('border-sky-400', 'text-sky-400');
+        el.classList.add('border-transparent', 'text-slate-400');
+      });
+      document.getElementById(tabId).classList.add('active');
+      const btn = document.getElementById('btn-' + tabId);
+      btn.classList.add('border-sky-400', 'text-sky-400');
+      btn.classList.remove('border-transparent', 'text-slate-400');
+    }
+
+    // 코드 복사
+    function copyCode(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text);
+      alert('클립보드에 코드가 복사되었습니다!');
+    }
+
+    // 모달 관리
+    function openModal() { 
+      document.getElementById('bm-modal').classList.remove('hidden'); 
+      document.getElementById('bm-modal').classList.add('flex'); 
+    }
+    function closeModal() { 
+      document.getElementById('bm-modal').classList.add('hidden'); 
+      document.getElementById('bm-modal').classList.remove('flex'); 
+    }
+  </script>
+</body>
+</html>
